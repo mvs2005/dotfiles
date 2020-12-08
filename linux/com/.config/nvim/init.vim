@@ -1,10 +1,20 @@
 call plug#begin('~/.local/share/nvim/plugged')
 
 Plug 'rakr/vim-one'
-"Plug 'morhetz/gruvbox'
-"Plug 'arcticicestudio/nord-vim'
+
+" Debug DotNet
+Plug 'w0rp/ale'
+Plug 'prabirshrestha/asyncomplete.vim'
+Plug 'OmniSharp/omnisharp-vim'
+Plug 'puremourning/vimspector'
+
+Plug 'SirVer/ultisnips'
+Plug 'honza/vim-snippets'
+" Plug 'prabirshrestha/asyncomplete-ultisnips.vim'
+
 Plug 'bluz71/vim-nightfly-guicolors'
-Plug  'arzg/vim-colors-xcode'
+Plug 'arcticicestudio/nord-vim'
+Plug 'tomasiser/vim-code-dark'
 
 Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
 Plug 'junegunn/fzf.vim'
@@ -12,23 +22,89 @@ Plug 'junegunn/fzf.vim'
 Plug 'neoclide/coc.nvim', {'do': { -> coc#util#install() }}
 Plug 'sheerun/vim-polyglot'
 Plug 'vim-airline/vim-airline'
-Plug 'scrooloose/nerdtree'
-Plug 'SirVer/ultisnips'
 Plug 'mhinz/vim-startify'
 
 Plug 'airblade/vim-gitgutter'
 Plug 'tpope/vim-fugitive'
 
 Plug 'ryanoasis/vim-devicons'
+Plug 'scrooloose/nerdtree'
 
 call plug#end()
+
+" Navigate by tabs
+nnoremap <C-Left> :tabprevious<CR>
+nnoremap <C-Right> :tabnext<CR>
+nnoremap <C-j> :tabprevious<CR>
+nnoremap <C-k> :tabnext<CR>
+nnoremap <C-t> :tabnew<CR>
+
+" FZF
+nmap <C><Tab> <Plug>(fzf-maps-n)
+nmap <C-p> :Files<CR>
+
+" ALE
+let g:ale_linters = { 'cs' : ['OmniSharp'] }
+let g:ale_sign_column_always = 1
+let g:ale_virtualtext_cursor = 1
+let g:ale_echo_cursor = 0
+let g:ale_sign_error = '❌'
+let g:ale_sign_warning = '⚠️'
+
+function InsertCmd( cmd )
+	execute 'belowright split | term cd $VIM_DIR && ' . a:cmd
+	execute 'resize 15'
+endfunction
+
+" Vimspector
+let g:vimspector_enable_mappings = 'VISUAL_STUDIO'
+nnoremap <C-q> :call vimspector#Reset()<CR>
+nnoremap <C-B> :call InsertCmd('./build.sh')<CR>
+
+" OmniSharp
+let g:OmniSharp_timeout = 5
+let g:omnicomplete_fetch_full_documentation = 1
+let g:OmniSharp_autoselect_existing_sln = 1
+let g:OmniSharp_sln_path = '~/ASTEP_Source/0_Dev/Trunk/ASTEP.Service/Astep.Service.Core'
+let g:OmniSharp_sln_list_name = '~/ASTEP_Source/0_Dev/Trunk/ASTEP.Service/Astep.Service.Core/ASTEP.Calculate.Service.sln'
+let g:OmniSharp_popup_position = 'peek'
+let g:OmniSharp_highlighting = 3
+let g:OmniSharp_diagnostic_exclude_paths = [ 'Temp\\', 'obj\\', '\.nuget\\']
+let g:OmniSharp_fzf_options = { 'down': '10' }
+let g:OmniSharp_server_type = 'roslyn'
+let g:OmniSharp_prefer_global_sln = 1
+let g:OmniSharp_server_stdio = 1
+
+augroup csharp_commands
+	autocmd!
+	autocmd FileType cs nmap <buffer> <C-G> <Plug>(omnisharp_go_to_definition)
+	autocmd FileType cs nmap <buffer> <C><Space> <Plug>(omnisharp_code_actions)
+	autocmd FileType cs nmap <buffer> <F2> <Plug>(omnisharp_rename)
+	autocmd FileType cs nmap <buffer> <C-c>f <Plug>(omnisharp_code_format)
+	autocmd FileType cs nmap <buffer> <C-g> <Plug>(omnisharp_find_implementations)
+	autocmd FileType cs nmap <buffer> <C-f> <Plug>(omnisharp_find_symbol)
+	autocmd FileType cs nmap <buffer> <C-F> <Plug>(omnisharp_find_usages)
+	autocmd FileType cs nmap <buffer> <C-d> <Plug>(omnisharp_documentation)
+	autocmd FileType cs nmap <buffer> <C-c>c <Plug>(omnisharp_global_code_check)
+	autocmd FileType cs nmap <buffer> <C-r>t <Plug>(omnisharp_run_test)
+	autocmd FileType cs nmap <buffer> <C-r>T <Plug>(omnisharp_run_tests_in_file)
+	autocmd FileType cs nmap <buffer> <C-s> <Plug>(omnisharp_start_server)
+	autocmd FileType cs nmap <buffer> <C-S> <Plug>(omnisharp_stop_server)
+	autocmd FileType cs nmap <buffer> <C-\> <Plug>(omnisharp_signature_help)
+	autocmd FileType cs imap <buffer> <C-\> <Plug>(omnisharp_signature_help)
+	autocmd BufWritePre *.cs :OmniSharpCodeFormat
+
+" vim-better-whitespace
+	autocmd FileType cs let g:strip_whitespace_on_save = 1
+	autocmd FileType cs let g:strip_whitespace_confirm = 0
+augroup END
 
 " Neo/vim Settings
 " ===
 
 set number " set number
 set noshowmode " dont show the mode under the lightline
-
+set relativenumber " Set dynamic number
 
 " Some servers have issues with backup files, see #649
 set nobackup
@@ -119,7 +195,22 @@ let g:quantum_black=1
 let g:quantum_italics=1
 
 hi! Comment cterm=italic
-colorscheme xcodedarkhc
+colorscheme nord
+" colorscheme codedark
+
+if exists('+termguicolors') && ($TERM == "st-256color" || $TERM == "tmux-256color")
+	let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
+	let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
+	set termguicolors
+endif
+
+let g:nord_italic = 1
+let g:nord_italic_comments = 1
+let g:nord_underline = 1
+let g:nord_uniform_status_lines = 1
+let g:nord_uniform_diff_background = 1
+let g:nord_cursor_line_number_background = 1
+
 set fcs=eob:\ 
 
 " air-line
@@ -156,6 +247,7 @@ let g:NERDTreeMinimalUI = 1
 let g:NERDTreeWinPos = 'rightbelow'
 let g:NERDTreeIgnore = ['^\.DS_Store$', '^tags$', '\.git$[[dir]]', '\.idea$[[dir]]', '\.sass-cache$']
 let g:NERDTreeStatusline = ''
+nnoremap <C-e> :NERDTreeFind<CR>
 
 " Automaticaly close nvim if NERDTree is only thing left open
 autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
@@ -190,10 +282,13 @@ let g:coc_global_extensions = ["coc-css",
             \ "coc-vetur"]
 
 " UltiSnip
-let g:UltiSnipsExpandTrigger = '<tab>'
-let g:UltiSnipsJumpForwardTrigger = '<tab>'
-let g:UltiSnipsJumpBackwardTrigger = '<s-tab>'
-let g:UltiSnipsSnippetDirectories=[$HOME.'/.config/nvim/snippets']
+let g:UltiSnipsExpandTrigger="<tab>"
+let g:UltiSnipsJumpForwardTrigger="<c-b>"
+let g:UltiSnipsJumpBackwardTrigger="<c-z>"
+
+" If you want :UltiSnipsEdit to split your window.
+let g:UltiSnipsEditSplit="vertical"
+" let g:UltiSnipsSnippetDirectories=[$HOME.'/.config/nvim/snippets']
 
 " icons
 
