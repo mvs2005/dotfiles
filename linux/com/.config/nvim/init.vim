@@ -40,8 +40,10 @@ nnoremap <C-k> :tabnext<CR>
 nnoremap <C-t> :tabnew<CR>
 
 " FZF
-nmap <C><Tab> <Plug>(fzf-maps-n)
+" nmap <C><Tab> <Plug>(fzf-maps-n)
+nmap <C><Tab> :Buffers <CR>
 nmap <C-p> :Files<CR>
+
 
 " ALE
 let g:ale_linters = { 'cs' : ['OmniSharp'] }
@@ -51,22 +53,36 @@ let g:ale_echo_cursor = 0
 let g:ale_sign_error = '❌'
 let g:ale_sign_warning = '⚠️'
 
-function InsertCmd( cmd )
-	execute 'belowright split | term cd $VIM_DIR && ' . a:cmd
+function RunFile( fileScript ) 
+	let dir = expand('%:p:h')
+	let lastfolder = ''
+	let files = []
+
+	while dir !=# lastfolder
+		if !empty(globpath(dir, a:fileScript, 1, 1))
+			break
+		endif
+
+		let lastfolder = dir
+		let dir = fnamemodify(dir, ':h')
+	endwhile
+
+	execute 'wa'
+	execute 'belowright split | term cd ' . dir . ' && ./' . a:fileScript
 	execute 'resize 15'
+	execute '$'
 endfunction
+
 
 " Vimspector
 let g:vimspector_enable_mappings = 'VISUAL_STUDIO'
-nnoremap <C-q> :call vimspector#Reset()<CR>
-nnoremap <C-B> :call InsertCmd('./build.sh')<CR>
+nnoremap <F12> :call vimspector#Reset()<CR>
+nnoremap <C-b> :call RunFile('build.sh')<CR>
 
 " OmniSharp
 let g:OmniSharp_timeout = 5
 let g:omnicomplete_fetch_full_documentation = 1
 let g:OmniSharp_autoselect_existing_sln = 1
-let g:OmniSharp_sln_path = '~/ASTEP_Source/0_Dev/Trunk/ASTEP.Service/Astep.Service.Core'
-let g:OmniSharp_sln_list_name = '~/ASTEP_Source/0_Dev/Trunk/ASTEP.Service/Astep.Service.Core/ASTEP.Calculate.Service.sln'
 let g:OmniSharp_popup_position = 'peek'
 let g:OmniSharp_highlighting = 3
 let g:OmniSharp_diagnostic_exclude_paths = [ 'Temp\\', 'obj\\', '\.nuget\\']
@@ -77,26 +93,30 @@ let g:OmniSharp_server_stdio = 1
 
 augroup csharp_commands
 	autocmd!
-	autocmd FileType cs nmap <buffer> <C-G> <Plug>(omnisharp_go_to_definition)
-	autocmd FileType cs nmap <buffer> <C><Space> <Plug>(omnisharp_code_actions)
-	autocmd FileType cs nmap <buffer> <F2> <Plug>(omnisharp_rename)
-	autocmd FileType cs nmap <buffer> <C-c>f <Plug>(omnisharp_code_format)
-	autocmd FileType cs nmap <buffer> <C-g> <Plug>(omnisharp_find_implementations)
-	autocmd FileType cs nmap <buffer> <C-f> <Plug>(omnisharp_find_symbol)
-	autocmd FileType cs nmap <buffer> <C-F> <Plug>(omnisharp_find_usages)
-	autocmd FileType cs nmap <buffer> <C-d> <Plug>(omnisharp_documentation)
-	autocmd FileType cs nmap <buffer> <C-c>c <Plug>(omnisharp_global_code_check)
-	autocmd FileType cs nmap <buffer> <C-r>t <Plug>(omnisharp_run_test)
-	autocmd FileType cs nmap <buffer> <C-r>T <Plug>(omnisharp_run_tests_in_file)
-	autocmd FileType cs nmap <buffer> <C-s> <Plug>(omnisharp_start_server)
-	autocmd FileType cs nmap <buffer> <C-S> <Plug>(omnisharp_stop_server)
-	autocmd FileType cs nmap <buffer> <C-\> <Plug>(omnisharp_signature_help)
-	autocmd FileType cs imap <buffer> <C-\> <Plug>(omnisharp_signature_help)
+	autocmd FileType cs nmap <silent> <buffer> <C-g>d <Plug>(omnisharp_go_to_definition)
+	autocmd FileType cs imap <silent> <buffer> <C><Space> <Plug>(omnisharp_code_actions)
+	autocmd FileType cs nmap <silent> <buffer> <F2> <Plug>(omnisharp_rename)
+	autocmd FileType cs nmap <silent> <buffer> <C-c>f <Plug>(omnisharp_code_format)
+	autocmd FileType cs nmap <silent> <buffer> <C-g>i <Plug>(omnisharp_find_implementations)
+	autocmd FileType cs nmap <silent> <buffer> <C-f>s <Plug>(omnisharp_find_symbol)
+	autocmd FileType cs nmap <silent> <buffer> <C-f>u <Plug>(omnisharp_find_usages)
+	autocmd FileType cs nmap <silent> <buffer> <C-d> <Plug>(omnisharp_documentation)
+	autocmd FileType cs nmap <silent> <buffer> <C-c>c <Plug>(omnisharp_global_code_check)
+	autocmd FileType cs nmap <silent> <buffer> <C-r>t <Plug>(omnisharp_run_test)
+	autocmd FileType cs nmap <silent> <buffer> <C-r>T <Plug>(omnisharp_run_tests_in_file)
+	autocmd FileType cs nmap <silent> <buffer> <C-s> <Plug>(omnisharp_start_server)
+	autocmd FileType cs nmap <silent> <buffer> <C-s>t <Plug>(omnisharp_stop_server)
+	autocmd FileType cs nmap <silent> <buffer> <C-\> <Plug>(omnisharp_signature_help)
+	autocmd FileType cs imap <silent> <buffer> <C-\> <Plug>(omnisharp_signature_help)
 	autocmd BufWritePre *.cs :OmniSharpCodeFormat
 
 " vim-better-whitespace
 	autocmd FileType cs let g:strip_whitespace_on_save = 1
 	autocmd FileType cs let g:strip_whitespace_confirm = 0
+	
+	autocmd Filetype cs setlocal tabstop=4
+	autocmd Filetype cs setlocal shiftwidth=4
+	autocmd Filetype cs setlocal expandtab
 augroup END
 
 " Neo/vim Settings
@@ -219,13 +239,44 @@ let g:airline_extensions = ['branch', 'hunks', 'coc', 'tabline']
 let g:airline#extensions#tabline#formatter = 'unique_tail_improved'
 let g:airline#extensions#tabline#buffer_idx_mode = 1
 let g:airline#extensions#tabline#buffer_nr_show = 0
-let g:airline#extensions#default#layout = [['a', 'b', 'c'], ['x', 'z', 'warning', 'error']]
 let g:airline_skip_empty_sections = 1
 let airline#extensions#coc#stl_format_err = '%E{[%e(#%fe)]}'
 let airline#extensions#coc#stl_format_warn = '%W{[%w(#%fw)]}'
 " Configure error/warning section to use coc.nvim
 let g:airline_section_error = '%{airline#util#wrap(airline#extensions#coc#get_error(),0)}'
 let g:airline_section_warning = '%{airline#util#wrap(airline#extensions#coc#get_warning(),0)}'
+
+function! GetPid()
+	let dir = expand('%:p:h')
+	let lastfolder = ''
+	let isFound = 0
+
+	while dir !=# lastfolder
+		if !empty(globpath(dir, 'pidfile', 1, 1))
+			let isFound = 1
+			break
+		endif
+
+		let lastfolder = dir
+		let dir = fnamemodify(dir, ':h')
+	endwhile
+
+	if isFound
+		let s:lines = readfile(dir . '/pidfile')
+		for s:line in s:lines
+			return s:line
+		endfor
+	endif
+	return ''
+endfunction
+
+call airline#parts#define_function('pid', 'GetPid')
+let g:airline_section_u = airline#section#create_left(['pid'])
+"let g:airline#extensions#default#layout = [['a', 'b', 'c'], ['x', 'z', 'warning', 'error']]
+let g:airline#extensions#default#layout = [
+    \ [ 'a', 'b', 'c' ],
+    \ [ 'x', 'y', 'u', 'z', 'warning', 'error' ]
+  \ ]
 
 let g:airline#extensions#tabline#buffer_idx_format = {
       \ '0': '0 ',
@@ -240,7 +291,8 @@ let g:airline#extensions#tabline#buffer_idx_format = {
       \ '9': '9 '
       \}
 
-" let g:airline_theme = 'nord'
+let g:airline_theme = 'nord'
+
 " NERDTree
 let g:NERDTreeShowHidden = 1
 let g:NERDTreeMinimalUI = 1
@@ -248,9 +300,11 @@ let g:NERDTreeWinPos = 'rightbelow'
 let g:NERDTreeIgnore = ['^\.DS_Store$', '^tags$', '\.git$[[dir]]', '\.idea$[[dir]]', '\.sass-cache$']
 let g:NERDTreeStatusline = ''
 nnoremap <C-e> :NERDTreeFind<CR>
+nnoremap <C-q>b :bp\|bd #<CR>
 
 " Automaticaly close nvim if NERDTree is only thing left open
 autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
+
 " Startify then NERDTree
 autocmd VimEnter *
                 \   if !argc()
@@ -391,7 +445,8 @@ endfunction
 command! ProjectFiles execute 'Files' s:find_git_root()
 command! -bang -nargs=* PRg
   \ call fzf#vim#grep("rg --column --line-number --no-heading --color=always --smart-case ".shellescape(<q-args>), 1, {'dir': system('git rev-parse --show-toplevel 2> /dev/null')[:-2]}, <bang>0)
-
+command! -bang -nargs=? -complete=dir Files
+  \ call fzf#vim#files(<q-args>, fzf#vim#with_preview(), <bang>0)
 
 
 " ┌──────────────┐
