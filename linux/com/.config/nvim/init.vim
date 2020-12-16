@@ -41,9 +41,20 @@ nnoremap <C-t> :tabnew<CR>
 
 " FZF
 " nmap <C><Tab> <Plug>(fzf-maps-n)
-nmap <C><Tab> :Buffers <CR>
+nmap <C-z> :Buffers <CR>
 nmap <C-p> :Files<CR>
+function! s:find_root()
+	for vcs in ['.git', '.svn', '.hg']
+		let dir = finddir(vcs.'/..', ';')
+		if !empty(dir)
+			execute 'FZF' dir
+			return
+		endif
+	endfor
+	FZF
+endfunction
 
+command! FZFR call s:find_root()
 
 " ALE
 let g:ale_linters = { 'cs' : ['OmniSharp'] }
@@ -70,6 +81,7 @@ function RunFile( fileScript )
 	execute 'wa'
 	execute 'belowright split | term cd ' . dir . ' && ./' . a:fileScript
 	execute 'resize 15'
+	execute 'file *console'
 	execute '$'
 endfunction
 
@@ -77,7 +89,8 @@ endfunction
 " Vimspector
 let g:vimspector_enable_mappings = 'VISUAL_STUDIO'
 nnoremap <F12> :call vimspector#Reset()<CR>
-nnoremap <C-b> :call RunFile('build.sh')<CR>
+nnoremap <C-b>b :call RunFile('build.sh')<CR>
+nnoremap <C-b>c :call RunFile('attachConsole.sh')<CR>
 
 " OmniSharp
 let g:OmniSharp_timeout = 5
@@ -90,22 +103,25 @@ let g:OmniSharp_fzf_options = { 'down': '10' }
 let g:OmniSharp_server_type = 'roslyn'
 let g:OmniSharp_prefer_global_sln = 1
 let g:OmniSharp_server_stdio = 1
+let g:OmniSharp_server_use_mono = 0
 
 augroup csharp_commands
 	autocmd!
-	autocmd FileType cs nmap <silent> <buffer> <C-g>d <Plug>(omnisharp_go_to_definition)
+	autocmd FileType cs nmap <silent> <buffer> <C-g> <Plug>(omnisharp_go_to_definition)
 	autocmd FileType cs imap <silent> <buffer> <C><Space> <Plug>(omnisharp_code_actions)
+	autocmd FileType cs nmap <silent> <buffer> <C-r> :OmniSharpGetCodeActions<CR> 
+	autocmd FileType cs nmap <silent> <buffer> <C-u> :OmniSharpFixUsings<CR> 
 	autocmd FileType cs nmap <silent> <buffer> <F2> <Plug>(omnisharp_rename)
 	autocmd FileType cs nmap <silent> <buffer> <C-c>f <Plug>(omnisharp_code_format)
-	autocmd FileType cs nmap <silent> <buffer> <C-g>i <Plug>(omnisharp_find_implementations)
+	autocmd FileType cs nmap <silent> <buffer> <C-c>c <Plug>(omnisharp_global_code_check)
+	autocmd FileType cs nmap <silent> <buffer> <C-f>i <Plug>(omnisharp_find_implementations)
 	autocmd FileType cs nmap <silent> <buffer> <C-f>s <Plug>(omnisharp_find_symbol)
 	autocmd FileType cs nmap <silent> <buffer> <C-f>u <Plug>(omnisharp_find_usages)
 	autocmd FileType cs nmap <silent> <buffer> <C-d> <Plug>(omnisharp_documentation)
-	autocmd FileType cs nmap <silent> <buffer> <C-c>c <Plug>(omnisharp_global_code_check)
-	autocmd FileType cs nmap <silent> <buffer> <C-r>t <Plug>(omnisharp_run_test)
-	autocmd FileType cs nmap <silent> <buffer> <C-r>T <Plug>(omnisharp_run_tests_in_file)
-	autocmd FileType cs nmap <silent> <buffer> <C-s> <Plug>(omnisharp_start_server)
-	autocmd FileType cs nmap <silent> <buffer> <C-s>t <Plug>(omnisharp_stop_server)
+	autocmd FileType cs nmap <silent> <buffer> <C-i>t <Plug>(omnisharp_run_test)
+	autocmd FileType cs nmap <silent> <buffer> <C-i>f <Plug>(omnisharp_run_tests_in_file)
+	autocmd FileType cs nmap <silent> <buffer> <C-s>q <Plug>(omnisharp_start_server)
+	autocmd FileType cs nmap <silent> <buffer> <C-s>s <Plug>(omnisharp_stop_server)
 	autocmd FileType cs nmap <silent> <buffer> <C-\> <Plug>(omnisharp_signature_help)
 	autocmd FileType cs imap <silent> <buffer> <C-\> <Plug>(omnisharp_signature_help)
 	autocmd BufWritePre *.cs :OmniSharpCodeFormat
