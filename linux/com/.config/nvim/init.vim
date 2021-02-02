@@ -8,27 +8,35 @@ Plug 'prabirshrestha/asyncomplete.vim'
 Plug 'OmniSharp/omnisharp-vim'
 Plug 'puremourning/vimspector'
 
+" Syntacs
+Plug 'neoclide/coc.nvim', {'do': { -> coc#util#install() }}
+Plug 'sheerun/vim-polyglot'
+
+" Snippets
 Plug 'SirVer/ultisnips'
 Plug 'honza/vim-snippets'
-" Plug 'prabirshrestha/asyncomplete-ultisnips.vim'
 
-Plug 'bluz71/vim-nightfly-guicolors'
-Plug 'arcticicestudio/nord-vim'
-Plug 'tomasiser/vim-code-dark'
-
+" Modal dialogs
 Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
 Plug 'junegunn/fzf.vim'
 
-Plug 'neoclide/coc.nvim', {'do': { -> coc#util#install() }}
-Plug 'sheerun/vim-polyglot'
-Plug 'vim-airline/vim-airline'
-Plug 'mhinz/vim-startify'
-
+" Git
 Plug 'airblade/vim-gitgutter'
 Plug 'tpope/vim-fugitive'
 
-Plug 'ryanoasis/vim-devicons'
+" Directory tree
 Plug 'scrooloose/nerdtree'
+
+" Bottom info pane
+Plug 'vim-airline/vim-airline'
+" Start page
+Plug 'mhinz/vim-startify'
+" Icons
+Plug 'ryanoasis/vim-devicons'
+" Color schemes
+Plug 'bluz71/vim-nightfly-guicolors'
+Plug 'arcticicestudio/nord-vim'
+Plug 'tomasiser/vim-code-dark'
 
 call plug#end()
 
@@ -64,7 +72,7 @@ let g:ale_echo_cursor = 0
 let g:ale_sign_error = '❌'
 let g:ale_sign_warning = '⚠️'
 
-function RunFile( fileScript ) 
+function! s:findDir(fileScript)
 	let dir = expand('%:p:h')
 	let lastfolder = ''
 	let files = []
@@ -78,6 +86,19 @@ function RunFile( fileScript )
 		let dir = fnamemodify(dir, ':h')
 	endwhile
 
+	return dir
+endfunction
+
+function RunFile( fileScript ) 
+	let dir = s:findDir('build.sh')
+
+
+	for bufNr in range(1, bufnr('$'))
+		if '*console' == bufname(bufNr)
+			execute 'bd! \*console'
+			break
+		endif
+	endfor
 	execute 'wa'
 	execute 'belowright split | term cd ' . dir . ' && ./' . a:fileScript
 	execute 'resize 15'
@@ -85,12 +106,37 @@ function RunFile( fileScript )
 	execute '$'
 endfunction
 
+function Build(functionName) abort
+	let dir = s:findDir('build.sh')
+	let scriptFiles = ['build.sh', 'run.sh', 'attachConsole.sh', 'tests.sh']
+	let symbols = []
+
+	for fileScript in scriptFiles
+		if !empty(globpath(dir, fileScript, 1, 1))
+			call add(symbols, fileScript)
+		endif
+	endfor
+
+	if len(symbols) == 0
+		echomsg 'No build actions ' . dir
+		return
+	endif
+
+	let fzf_options = copy(get(g:, 'OmniSharp_fzf_options', { 'down': '40%' }))
+	call fzf#run(
+				\ extend(fzf_options, {
+				\ 'source': symbols,
+				\ 'sink': function(a:functionName)}))
+endfunction
 
 " Vimspector
 let g:vimspector_enable_mappings = 'VISUAL_STUDIO'
 nnoremap <F12> :call vimspector#Reset()<CR>
-nnoremap <C-b>b :call RunFile('build.sh')<CR>
-nnoremap <C-b>c :call RunFile('attachConsole.sh')<CR>
+nnoremap <C-b> :call Build('RunFile')<CR>
+" nnoremap <C-b>b :call RunFile('build.sh')<CR>
+" nnoremap <C-b>r :call RunFile('run.sh')<CR>
+" nnoremap <C-b>t :call RunFile('tests.sh')<CR>
+" nnoremap <C-b>c :call RunFile('attachConsole.sh')<CR>
 
 " OmniSharp
 let g:OmniSharp_timeout = 5
@@ -126,10 +172,10 @@ augroup csharp_commands
 	autocmd FileType cs imap <silent> <buffer> <C-\> <Plug>(omnisharp_signature_help)
 	autocmd BufWritePre *.cs :OmniSharpCodeFormat
 
-" vim-better-whitespace
+	" vim-better-whitespace
 	autocmd FileType cs let g:strip_whitespace_on_save = 1
 	autocmd FileType cs let g:strip_whitespace_confirm = 0
-	
+
 	autocmd Filetype cs setlocal tabstop=4
 	autocmd Filetype cs setlocal shiftwidth=4
 	autocmd Filetype cs setlocal expandtab
@@ -158,14 +204,14 @@ set signcolumn=yes
 " Use tab for trigger completion with characters ahead and navigate.
 " Use command ':verbose imap <tab>' to make sure tab is not mapped by other plugin.
 inoremap <silent><expr> <TAB>
-      \ pumvisible() ? "\<C-n>" :
-      \ <SID>check_back_space() ? "\<TAB>" :
-      \ coc#refresh()
+			\ pumvisible() ? "\<C-n>" :
+			\ <SID>check_back_space() ? "\<TAB>" :
+			\ coc#refresh()
 inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
 
 function! s:check_back_space() abort
-  let col = col('.') - 1
-  return !col || getline('.')[col - 1]  =~# '\s'
+	let col = col('.') - 1
+	return !col || getline('.')[col - 1]  =~# '\s'
 endfunction
 
 "let g:gruvbox_contrast_dark='hard'
@@ -177,6 +223,9 @@ if has('vim_starting')
 	set encoding=utf-8
 	scriptencoding utf-8
 endif
+
+" set guifont=JetBrainsMono
+set guifont=DroidSansMono
 
 " Enables 24-bit RGB color in the TUI
 if has('termguicolors')
@@ -290,22 +339,22 @@ call airline#parts#define_function('pid', 'GetPid')
 let g:airline_section_u = airline#section#create_left(['pid'])
 "let g:airline#extensions#default#layout = [['a', 'b', 'c'], ['x', 'z', 'warning', 'error']]
 let g:airline#extensions#default#layout = [
-    \ [ 'a', 'b', 'c' ],
-    \ [ 'x', 'y', 'u', 'z', 'warning', 'error' ]
-  \ ]
+			\ [ 'a', 'b', 'c' ],
+			\ [ 'x', 'y', 'u', 'z', 'warning', 'error' ]
+			\ ]
 
 let g:airline#extensions#tabline#buffer_idx_format = {
-      \ '0': '0 ',
-      \ '1': '1 ',
-      \ '2': '2 ',
-      \ '3': '3 ',
-      \ '4': '4 ',
-      \ '5': '5 ',
-      \ '6': '6 ',
-      \ '7': '7 ',
-      \ '8': '8 ',
-      \ '9': '9 '
-      \}
+			\ '0': '0 ',
+			\ '1': '1 ',
+			\ '2': '2 ',
+			\ '3': '3 ',
+			\ '4': '4 ',
+			\ '5': '5 ',
+			\ '6': '6 ',
+			\ '7': '7 ',
+			\ '8': '8 ',
+			\ '9': '9 '
+			\}
 
 let g:airline_theme = 'nord'
 
@@ -323,11 +372,11 @@ autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isT
 
 " Startify then NERDTree
 autocmd VimEnter *
-                \   if !argc()
-                \ |   Startify
-                \ |   NERDTree
-                \ |   wincmd w
-                \ | endif
+			\   if !argc()
+			\ |   Startify
+			\ |   NERDTree
+			\ |   wincmd w
+			\ | endif
 
 
 " COC
@@ -335,21 +384,21 @@ hi! link CocErrorSign WarningMsg
 hi! link CocWarningSign Number
 hi! link CocInfoSign Type
 let g:coc_global_extensions = ["coc-css",
-            \ "coc-rls",
-            \ "coc-docker",
-            \ "coc-eslint",
-            \ "coc-html",
-            \ "coc-java",
-            \ "coc-json",
-            \ "coc-prettier",
-            \ "coc-highlight",
-            \ "coc-python",
-            \ "coc-snippets",
-            \ "coc-tslint",
-            \ "coc-tsserver",
-            \ "coc-ultisnips",
-            \ "coc-tailwindcss",
-            \ "coc-vetur"]
+			\ "coc-rls",
+			\ "coc-docker",
+			\ "coc-eslint",
+			\ "coc-html",
+			\ "coc-java",
+			\ "coc-json",
+			\ "coc-prettier",
+			\ "coc-highlight",
+			\ "coc-python",
+			\ "coc-snippets",
+			\ "coc-tslint",
+			\ "coc-tsserver",
+			\ "coc-ultisnips",
+			\ "coc-tailwindcss",
+			\ "coc-vetur"]
 
 " UltiSnip
 let g:UltiSnipsExpandTrigger="<tab>"
@@ -390,19 +439,19 @@ au BufNewFile,BufRead /*.rasi setf css
 " Startify
 "
 let g:startify_custom_header = [
-            \ '       ______   __                  __     __  __               ',
-            \ '      /      \ |  \                |  \   |  \|  \              ',
-            \ '     |  $$$$$$\| $$   __  __    __ | $$   | $$ \$$ ______ ____  ',
-            \ '     | $$___\$$| $$  /  \|  \  |  \| $$   | $$|  \|      \    \ ',
-            \ '      \$$    \ | $$_/  $$| $$  | $$ \$$\ /  $$| $$| $$$$$$\$$$$\',
-            \ '      _\$$$$$$\| $$   $$ | $$  | $$  \$$\  $$ | $$| $$ | $$ | $$',
-            \ '     |  \__| $$| $$$$$$\ | $$__/ $$   \$$ $$  | $$| $$ | $$ | $$',
-            \ '      \$$    $$| $$  \$$\ \$$    $$    \$$$   | $$| $$ | $$ | $$',
-            \ '       \$$$$$$  \$$   \$$ _\$$$$$$$     \$     \$$ \$$  \$$  \$$',
-            \ '                         |  \__| $$                             ',
-            \ '                          \$$    $$                             ',
-            \ '                           \$$$$$$                              ',
-            \ ]
+			\ '       ______   __                  __     __  __               ',
+			\ '      /      \ |  \                |  \   |  \|  \              ',
+			\ '     |  $$$$$$\| $$   __  __    __ | $$   | $$ \$$ ______ ____  ',
+			\ '     | $$___\$$| $$  /  \|  \  |  \| $$   | $$|  \|      \    \ ',
+			\ '      \$$    \ | $$_/  $$| $$  | $$ \$$\ /  $$| $$| $$$$$$\$$$$\',
+			\ '      _\$$$$$$\| $$   $$ | $$  | $$  \$$\  $$ | $$| $$ | $$ | $$',
+			\ '     |  \__| $$| $$$$$$\ | $$__/ $$   \$$ $$  | $$| $$ | $$ | $$',
+			\ '      \$$    $$| $$  \$$\ \$$    $$    \$$$   | $$| $$ | $$ | $$',
+			\ '       \$$$$$$  \$$   \$$ _\$$$$$$$     \$     \$$ \$$  \$$  \$$',
+			\ '                         |  \__| $$                             ',
+			\ '                          \$$    $$                             ',
+			\ '                           \$$$$$$                              ',
+			\ ]
 
 " fzf
 let $FZF_DEFAULT_OPTS = '--layout=reverse'
@@ -412,57 +461,57 @@ let g:fzf_layout = { 'window': 'call OpenFloatingWin()' }
 
 function! OpenFloatingWin()
 
-  " 90% of the height
-  let height = float2nr(&lines * 0.7)
-  " 60% of the height
-  let width = float2nr(&columns * 0.5)
-  " horizontal position (centralized)
-  let left = float2nr((&columns - width) / 2)
-  let top = float2nr((&lines - height) / 2)
+	" 90% of the height
+	let height = float2nr(&lines * 0.7)
+	" 60% of the height
+	let width = float2nr(&columns * 0.5)
+	" horizontal position (centralized)
+	let left = float2nr((&columns - width) / 2)
+	let top = float2nr((&lines - height) / 2)
 
-  "Set the position, size, etc. of the floating window.
-  "The size configuration here may not be so flexible, and there's room for further improvement.
-  let opts = {
-        \ 'relative': 'editor',
-        \ 'row': top,
-        \ 'col': left,
-        \ 'width': width,
-        \ 'height': height,
-        \ 'style': 'minimal'
-        \ }
+	"Set the position, size, etc. of the floating window.
+	"The size configuration here may not be so flexible, and there's room for further improvement.
+	let opts = {
+				\ 'relative': 'editor',
+				\ 'row': top,
+				\ 'col': left,
+				\ 'width': width,
+				\ 'height': height,
+				\ 'style': 'minimal'
+				\ }
 
-  let top = "╭" . repeat("─", width - 2) . "╮"
-  let mid = "│" . repeat(" ", width - 2) . "│"
-  let bot = "╰" . repeat("─", width - 2) . "╯"
-  let lines = [top] + repeat([mid], height - 2) + [bot]
+	let top = "╭" . repeat("─", width - 2) . "╮"
+	let mid = "│" . repeat(" ", width - 2) . "│"
+	let bot = "╰" . repeat("─", width - 2) . "╯"
+	let lines = [top] + repeat([mid], height - 2) + [bot]
 
-  let s:buf = nvim_create_buf(v:false, v:true)
-  call nvim_buf_set_lines(s:buf, 0, -1, v:true, lines)
-  call nvim_open_win(s:buf, v:true, opts)
-  set winhl=Normal:Normal
-  let opts.row += 1
-  let opts.height -= 2
-  let opts.col += 2
-  let opts.width -= 4
-  call nvim_open_win(nvim_create_buf(v:false, v:true), v:true, opts)
-  au BufWipeout <buffer> exe 'bw '.s:buf
+	let s:buf = nvim_create_buf(v:false, v:true)
+	call nvim_buf_set_lines(s:buf, 0, -1, v:true, lines)
+	call nvim_open_win(s:buf, v:true, opts)
+	set winhl=Normal:Normal
+	let opts.row += 1
+	let opts.height -= 2
+	let opts.col += 2
+	let opts.width -= 4
+	call nvim_open_win(nvim_create_buf(v:false, v:true), v:true, opts)
+	au BufWipeout <buffer> exe 'bw '.s:buf
 
-  setlocal
-        \ buftype=nofile
-        \ nobuflisted
-        \ bufhidden=hide
-        \ nonumber
-        \ norelativenumber
-        \ signcolumn=no
+	setlocal
+				\ buftype=nofile
+				\ nobuflisted
+				\ bufhidden=hide
+				\ nonumber
+				\ norelativenumber
+				\ signcolumn=no
 endfunction
 function! s:find_git_root()
-    return system('git rev-parse --show-toplevel 2> /dev/null')[:-2]
+	return system('git rev-parse --show-toplevel 2> /dev/null')[:-2]
 endfunction
 command! ProjectFiles execute 'Files' s:find_git_root()
 command! -bang -nargs=* PRg
-  \ call fzf#vim#grep("rg --column --line-number --no-heading --color=always --smart-case ".shellescape(<q-args>), 1, {'dir': system('git rev-parse --show-toplevel 2> /dev/null')[:-2]}, <bang>0)
+			\ call fzf#vim#grep("rg --column --line-number --no-heading --color=always --smart-case ".shellescape(<q-args>), 1, {'dir': system('git rev-parse --show-toplevel 2> /dev/null')[:-2]}, <bang>0)
 command! -bang -nargs=? -complete=dir Files
-  \ call fzf#vim#files(<q-args>, fzf#vim#with_preview(), <bang>0)
+			\ call fzf#vim#files(<q-args>, fzf#vim#with_preview(), <bang>0)
 
 
 " ┌──────────────┐
