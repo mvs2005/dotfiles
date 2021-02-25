@@ -100,7 +100,7 @@ function RunFile( fileScript )
 		endif
 	endfor
 	execute 'wa'
-	execute 'belowright split | term cd ' . dir . ' && ./' . a:fileScript
+	execute 'belowright split | term cd ' . dir . ' && sh ./' . a:fileScript
 	execute 'resize 15'
 	execute 'file *console'
 	execute '$'
