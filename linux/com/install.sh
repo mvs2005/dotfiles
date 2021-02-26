@@ -18,7 +18,8 @@ yes | sudo apt-get install -y make python3.8 python3.8-dev vim-gtk git gcc libnc
 ls -lh /usr/bin/ | grep python3
 python3ConfigDir="/usr/lib/python3.8/"$(ls /usr/lib/python3.8/ | grep config-)
 echo $python3ConfigDir
-./configure --enable-python3interp --with-python3-command=/usr/bin/python3.8 -with-python3-config-dir=$python3ConfigDir
+yes | sudo update-alternatives /usr/bin/python3 python3 /usr/bin/python3.8 8
+#./configure --enable-python3interp --with-python3-command=/usr/bin/python3.8 -with-python3-config-dir=$python3ConfigDir
 sudo ln -sfn /usr/bin/python3.8 /usr/bin/python3
 
 sudo apt-get update --yes
@@ -40,7 +41,7 @@ pip3 install neovim
 curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 sudo npm install --global yarn
 
-nvim +PlugInstall +qa
+yes | nvim +PlugInstall +qa
 
 #git clone https://github.com/ryanoasis/nerd-fonts
 #~/nerd-fonts/install.sh fira-code
