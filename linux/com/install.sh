@@ -14,13 +14,14 @@ yes | sudo apt-get install -y apt-transport-https software-properties-common dot
 sudo apt-get update --yes
 yes | sudo add-apt-repository ppa:deadsnakes/ppa
 sudo apt-get update --yes
-yes | sudo apt-get install -y make python3.8 python3.8-dev vim-gtk git gcc libncurses5-dev libncursesw5-dev python3-pip
-ls -lh /usr/bin/ | grep python3
-python3ConfigDir="/usr/lib/python3.8/"$(ls /usr/lib/python3.8/ | grep config-)
-echo $python3ConfigDir
+yes | sudo apt-get install -y make python3.8 python3.8-dev python-apt python3.8-gdbm python3.8-distutils git gcc libncurses5-dev libncursesw5-dev python3-pip
+yes | sudo update-alternatives --install /usr/bin/python python /usr/bin/python3.8 8
 yes | sudo update-alternatives /usr/bin/python3 python3 /usr/bin/python3.8 8
-#./configure --enable-python3interp --with-python3-command=/usr/bin/python3.8 -with-python3-config-dir=$python3ConfigDir
 sudo ln -sfn /usr/bin/python3.8 /usr/bin/python3
+sudo apt-get install -y remove python3-pip
+sudo python3.8 -m easy_install pip
+sudo apt-get install -y install python3-pip
+sudo apt-get install -y upgrade
 
 sudo apt-get update --yes
 sudo apt-get install -y mono-devel
