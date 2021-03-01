@@ -21,7 +21,7 @@ sudo ln -sfn /usr/bin/python3.8 /usr/bin/python3
 sudo apt-get install -y remove python3-pip
 sudo python3.8 -m easy_install pip
 sudo apt-get install -y install python3-pip
-sudo apt-get install -y upgrade
+#sudo apt-get install -y upgrade
 
 sudo apt-get update --yes
 sudo apt-get install -y mono-devel
@@ -35,9 +35,9 @@ sudo ln -sfn ~/netcoredbg/bin/netcoredbg /usr/bin/netcoredbg
 
 # Install neovim
 sudo apt-get install -y curl nodejs npm
-sudo add-apt-repository ppa:neovim-ppa/unstable
-sudo apt-get update --yes
-sudo apt-get install -y neovim
+cd ~/ &&  wget https://github.com/neovim/neovim/releases/download/v0.4.4/nvim-linux64.tar.gz && tar xzvf nvim-linux64.tar.gz
+sudo mv ./nvim-linux64 /usr/share/nvim
+sudo ln -sfn /usr/share/nvim/bin/nvim /usr/bin/nvim
 pip3 install neovim
 curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 sudo npm install --global yarn
