@@ -42,10 +42,8 @@ pip3 install neovim
 curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 sudo npm install --global yarn
 
-cp -r ./dotfiles/linux/com/.config/compton.conf ~/.config/
+cp -r ./dotfiles/linux/com/.config/alacritty ~/.config/
 cp -r ./dotfiles/linux/com/.config/nvim/ ~/.config/
-cp -r ./dotfiles/linux/com/.config/rofi/ ~/.config/
-cp -r ./dotfiles/linux/com/.config/fish/ ~/.config/
 
 nvim +PlugInstall +qa
 
