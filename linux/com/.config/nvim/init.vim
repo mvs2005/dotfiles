@@ -313,6 +313,7 @@ let g:airline_section_warning = '%{airline#util#wrap(airline#extensions#coc#get_
 
 function! GetPid()
 	let dir = s:findDir('global.json')
+	let isFound = 0
 	if !empty(globpath(dir, 'pidfile', 1, 1))
 		let isFound = 1
 	endif
