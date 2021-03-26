@@ -312,19 +312,10 @@ let g:airline_section_error = '%{airline#util#wrap(airline#extensions#coc#get_er
 let g:airline_section_warning = '%{airline#util#wrap(airline#extensions#coc#get_warning(),0)}'
 
 function! GetPid()
-	let dir = expand('%:p:h')
-	let lastfolder = ''
-	let isFound = 0
-
-	while dir !=# lastfolder
-		if !empty(globpath(dir, 'pidfile', 1, 1))
-			let isFound = 1
-			break
-		endif
-
-		let lastfolder = dir
-		let dir = fnamemodify(dir, ':h')
-	endwhile
+	let dir = s:findDir('global.json')
+	if !empty(globpath(dir, 'pidfile', 1, 1))
+		let isFound = 1
+	endif
 
 	if isFound
 		let s:lines = readfile(dir . '/pidfile')
